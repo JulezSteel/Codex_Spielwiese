@@ -201,19 +201,38 @@ export function ScenarioApp({ defaultProvider }: Props) {
         </div>
 
         {step === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">{copy.introTitle}</CardTitle>
-              <CardDescription>{copy.introBody}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6">
-              <p className="text-sm text-muted-foreground">{copy.introExplain}</p>
-              <Button size="lg" onClick={() => setStep(1)}>
-                {copy.startCta}
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
+  <>
+    <div className="mb-6 flex justify-end">
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">
+          {copy.languageLabel}
+        </span>
+        <Switch
+          checked={config.language === "de"}
+          onChange={(event) =>
+            updateConfig("language", event.target.checked ? "de" : "en")
+          }
+        />
+        <span className="text-sm text-muted-foreground">
+          {config.language === "de" ? "DE" : "EN"}
+        </span>
+      </div>
+    </div>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-2xl">{copy.introTitle}</CardTitle>
+        <CardDescription>{copy.introBody}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6">
+        <p className="text-sm text-muted-foreground">{copy.introExplain}</p>
+        <Button size="lg" onClick={() => setStep(1)}>
+          {copy.startCta}
+        </Button>
+      </CardContent>
+    </Card>
+  </>
+) : null}
 
         {step === 1 ? (
           <div className="flex flex-col gap-6">
@@ -226,7 +245,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                     : "Stimme die Regler ab und wähle deinen Narrative-Anbieter."}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
+              <CardContent className="flex flex-col gap-8">
                 <div className="flex flex-col gap-2">
                   <span className="text-sm font-medium">{copy.languageLabel}</span>
                   <div className="flex items-center gap-2">
@@ -261,7 +280,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-6">
               {axes.map((axis) => (
                 <Card key={axis.id}>
                   <CardHeader>

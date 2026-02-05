@@ -216,12 +216,12 @@ export const axes: AxisConfig[] = [
 
 export const uiCopy = {
   en: {
-    introTitle: "2050 Future Scenario Engine",
-    introBody:
-      "Adjust seven sliders to calibrate a plausible 2050 world. We generate a narrative and audio narration describing what life might feel like.",
-    introExplain:
-      "Move through the steps: calibrate the scenario, then generate a grounded, probabilistic story and listen to it.",
-    startCta: "Start",
+    introTitle: "The future is open — but not arbitrary.",
+introBody:
+  "The world feels more uncertain than it has in a long time. Climate risks, geopolitical tensions, technological leaps, and social frictions overlap. At the same time, there are many unknowns — and rarely simple answers.",
+introExplain:
+  "This tool helps you sketch a plausible picture of life in 2050. By calibrating seven primary axes — from climate and demography to technology diffusion — you generate a coherent scenario narrative (optionally with audio). This is not a prediction, but a thinking tool to make assumptions explicit and explore their consequences.",
+startCta: "Start calibrating",
     stepIntro: "Intro",
     stepCalibrate: "Calibrate",
     stepResults: "Results",
@@ -247,12 +247,12 @@ export const uiCopy = {
     sliderSummary: "Scenario summary"
   },
   de: {
-    introTitle: "2050 Zukunftsszenario-Engine",
-    introBody:
-      "Stelle sieben Regler ein, um ein plausibles Jahr-2050-Szenario zu kalibrieren. Wir erzeugen eine Erzählung und eine Audio-Narration.",
-    introExplain:
-      "Gehe Schritt für Schritt: Kalibrieren, dann eine realistische, probabilistische Geschichte generieren und anhören.",
-    startCta: "Los geht’s",
+    introTitle: "Die Zukunft ist offen – aber nicht beliebig.",
+introBody:
+  "Die Welt fühlt sich so unsicher an wie lange nicht. Klimarisiken, geopolitische Spannungen, technologische Sprünge und gesellschaftliche Brüche überlagern sich. Gleichzeitig gibt es viele Unbekannte – und selten einfache Antworten.",
+introExplain:
+  "Dieses Tool hilft dir, ein plausibles Bild davon zu skizzieren, wie das Leben im Jahr 2050 aussehen könnte. Du kalibrierst sieben Primärachsen – von Klima und Demografie bis hin zur Technologie-Diffusion – und erhältst daraus ein konsistentes Zukunftsszenario (optional auch als Audio). Das ist keine Prognose, sondern ein Denkwerkzeug, um Annahmen sichtbar zu machen und ihre Konsequenzen zu durchdenken.",
+startCta: "Szenario kalibrieren",
     stepIntro: "Intro",
     stepCalibrate: "Kalibrieren",
     stepResults: "Ergebnis",
