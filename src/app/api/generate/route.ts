@@ -3,6 +3,10 @@ import OpenAI from "openai";
 import { ScenarioConfig } from "@/lib/types";
 import { axes } from "@/lib/content";
 
+/* -------------------------------------------------
+   Helpers
+-------------------------------------------------- */
+
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
@@ -15,18 +19,41 @@ type NumericAxisKey =
   | "governanceInfo"
   | "techDiffusion";
 
-axes.forEach((axis) => {
-  const key = axis.id as NumericAxisKey;
-  const value = Number(config[key]);
-  config[key] = clamp(
-    Number.isFinite(value) ? value : axis.min,
-    axis.min,
-    axis.max
-  );
-});
+/* -------------------------------------------------
+   Validation
+-------------------------------------------------- */
+
+function validateConfig(input: ScenarioConfig): ScenarioConfig {
+  const config: ScenarioConfig = { ...input };
+
+  axes.forEach((axis) => {
+    const key = axis.id as NumericAxisKey;
+    const value = Number(config[key]);
+    config[key] = clamp(
+      Number.isFinite(value) ? value : axis.min,
+      axis.min,
+      axis.max
+    );
+  });
+
+  if (config.language !== "en" && config.language !== "de") {
+    config.language = "en";
+  }
+
+  if (!["openai", "gemini", "mock"].includes(config.provider)) {
+    config.provider = "mock";
+  }
+
+  return config;
+}
+
+/* -------------------------------------------------
+   Prompt construction
+-------------------------------------------------- */
 
 function buildPrompt(config: ScenarioConfig) {
   const language = config.language;
+
   const system =
     language === "de"
       ? "Du bist eine fundierte Zukunftsanalystin. Schreibe eine plausible, intern konsistente 2050-Erzählung. Verwende probabilistische Sprache, keine Gewissheiten. Ton: klar, bodenständig, leicht optimistisch aber ehrlich. Länge 180–280 Wörter. Beziehe jede Achse explizit ein: Klima, Demografie/Arbeitskräfte, Finanzstabilität, sozialer Zusammenhalt, Geopolitik, Regierungsfähigkeit/Informationsordnung, Technologie-Diffusion. Ende mit genau 5 Bullet Points unter der Überschrift 'Was das für dich bedeutet'."
@@ -47,20 +74,24 @@ function buildPrompt(config: ScenarioConfig) {
   return { system, user };
 }
 
+/* -------------------------------------------------
+   Mock fallback
+-------------------------------------------------- */
+
 function mockNarrative(config: ScenarioConfig) {
   const language = config.language;
   const climate = config.climateC.toFixed(1);
-  const workforce = config.workforcePressure;
-  const finance = config.financialRisk;
-  const cohesion = config.socialCohesion;
-  const geopolitics = config.geopolitics;
-  const governance = config.governanceInfo;
-  const tech = config.techDiffusion;
+
   if (language === "de") {
-    return `Das Jahr 2050 fühlt sich nach einem vorsichtigen Balanceakt an. Die Erwärmung liegt bei etwa ${climate}°C, was spürbare Risiken bringt, aber durch fortgesetzte Anpassung in Schach gehalten werden könnte. Der Arbeitsmarkt steht unter einem Druckwert von ${workforce}, sodass Automatisierung, Migration und längere Erwerbsbiografien vermutlich zusammenwirken müssen, um Lücken zu schließen. Finanzmärkte wirken mit einem Risiko von ${finance} volatil genug, dass Vorsicht im Kreditzyklus angesagt bleibt. Der soziale Zusammenhalt liegt bei ${cohesion}, was auf gemischte, aber noch tragfähige Institutionen hindeutet. Geopolitische Fragmentierung (${geopolitics}) lässt Handelsregeln weniger berechenbar erscheinen, während Governance und Informationsintegrität (${governance}) den Ton angeben, ob Koordination gelingt. Technologie-Diffusion (${tech}) bestimmt, ob Produktivitätsgewinne breit ankommen.\n\nWas das für dich bedeutet\n- Investiere Zeit in resiliente Fähigkeiten und lebenslanges Lernen.\n- Plane Energie- und Mobilitätsentscheidungen langfristiger.\n- Baue finanzielle Puffer für volatile Phasen auf.\n- Engagiere dich lokal, um Vertrauen und Zusammenhalt zu stärken.\n- Unterstütze Politik für sichere digitale Informationsräume.`;
+    return `Das Jahr 2050 fühlt sich nach einem vorsichtigen Balanceakt an. Die Erwärmung liegt bei etwa ${climate}°C. Die Welt ist nicht stabil, aber handlungsfähig. Institutionen stehen unter Druck, doch technologische und gesellschaftliche Anpassung eröffnen weiterhin Spielräume.\n\nWas das für dich bedeutet\n- Investiere in anpassungsfähige Fähigkeiten.\n- Plane langfristiger.\n- Baue Resilienz auf.\n- Pflege soziale Netze.\n- Bleib politisch aufmerksam.`;
   }
-  return `2050 feels like a careful balancing act. Warming sits near ${climate}°C, which raises tangible risks yet could remain manageable with continued adaptation. Workforce pressure at ${workforce} suggests automation, migration, and longer careers are likely needed to keep services staffed. Financial volatility around ${finance} means credit cycles stay cautious and shocks remain possible. Social cohesion at ${cohesion} signals institutions are mixed but still capable of inclusion. Geopolitical fragmentation (${geopolitics}) makes trade rules less predictable, while governance and information integrity (${governance}) decide whether coordination holds. Technology diffusion at ${tech} will shape whether productivity gains spread broadly.\n\nWhat this means for you\n- Invest in resilient skills and continuous learning.\n- Plan energy and mobility choices with longer horizons.\n- Build buffers for volatile financial periods.\n- Engage locally to strengthen trust and cohesion.\n- Support policies that protect digital information spaces.`;
+
+  return `2050 feels like a careful balancing act. Warming sits near ${climate}°C. The world is strained but still capable of adaptation. Institutions are under pressure, yet technology and social learning keep options open.\n\nWhat this means for you\n- Invest in adaptable skills.\n- Plan long-term.\n- Build resilience.\n- Strengthen social ties.\n- Stay civically engaged.`;
 }
+
+/* -------------------------------------------------
+   API Route
+-------------------------------------------------- */
 
 export async function POST(request: NextRequest) {
   const payload = (await request.json()) as ScenarioConfig;
@@ -71,6 +102,7 @@ export async function POST(request: NextRequest) {
     if (config.provider === "openai" && process.env.OPENAI_API_KEY) {
       const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
       const completion = await client.chat.completions.create({
         model,
         messages: [
@@ -79,6 +111,7 @@ export async function POST(request: NextRequest) {
         ],
         temperature: 0.7
       });
+
       const text = completion.choices[0]?.message?.content?.trim();
       if (!text) throw new Error("Empty response from OpenAI.");
       return NextResponse.json({ text });
@@ -100,22 +133,19 @@ export async function POST(request: NextRequest) {
                 parts: [{ text: `${system}\n\n${user}` }]
               }
             ],
-            generationConfig: {
-              temperature: 0.7
-            }
+            generationConfig: { temperature: 0.7 }
           })
         }
       );
+
       if (!response.ok) {
-        const message = await response.text();
-        throw new Error(message || "Gemini request failed.");
+        throw new Error("Gemini request failed.");
       }
-      const data = (await response.json()) as {
-        candidates?: Array<{
-          content?: { parts?: Array<{ text?: string }> };
-        }>;
-      };
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      const data = await response.json();
+      const text =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
       if (!text) throw new Error("Empty response from Gemini.");
       return NextResponse.json({ text });
     }
@@ -126,7 +156,9 @@ export async function POST(request: NextRequest) {
       {
         text: mockNarrative(config),
         warning:
-          error instanceof Error ? error.message : "Generation failed, using mock."
+          error instanceof Error
+            ? error.message
+            : "Generation failed, using mock."
       },
       { status: 200 }
     );
