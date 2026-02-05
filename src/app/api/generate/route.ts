@@ -6,24 +6,24 @@ import { axes } from "@/lib/content";
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-function validateConfig(input: ScenarioConfig): ScenarioConfig {
-  const config = { ...input };
-  axes.forEach((axis) => {
-    const value = Number(config[axis.id]);
-    config[axis.id] = clamp(
-      Number.isFinite(value) ? value : axis.min,
-      axis.min,
-      axis.max
-    ) as ScenarioConfig[typeof axis.id];
-  });
-  if (config.language !== "en" && config.language !== "de") {
-    config.language = "en";
-  }
-  if (!["openai", "gemini", "mock"].includes(config.provider)) {
-    config.provider = "mock";
-  }
-  return config;
-}
+type NumericAxisKey =
+  | "climateC"
+  | "workforcePressure"
+  | "financialRisk"
+  | "socialCohesion"
+  | "geopolitics"
+  | "governanceInfo"
+  | "techDiffusion";
+
+axes.forEach((axis) => {
+  const key = axis.id as NumericAxisKey;
+  const value = Number(config[key]);
+  config[key] = clamp(
+    Number.isFinite(value) ? value : axis.min,
+    axis.min,
+    axis.max
+  );
+});
 
 function buildPrompt(config: ScenarioConfig) {
   const language = config.language;
