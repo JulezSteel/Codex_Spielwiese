@@ -8,14 +8,14 @@ export interface SwitchProps
 
 export function Switch({ className, label, ...props }: SwitchProps) {
   return (
-    <label className={cn("inline-flex items-center gap-2", className)}>
+    <label className={cn("inline-flex items-center gap-3", className)}>
       <input
         type="checkbox"
         className="peer sr-only"
         {...props}
       />
-      <span className="h-6 w-11 rounded-full bg-muted transition peer-checked:bg-primary relative">
-        <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5" />
+      <span className="h-6 w-11 rounded-full bg-muted transition peer-checked:bg-primary relative border border-transparent">
+        <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-primary-foreground transition peer-checked:translate-x-5" />
       </span>
       {label ? <span className="text-sm text-muted-foreground">{label}</span> : null}
     </label>

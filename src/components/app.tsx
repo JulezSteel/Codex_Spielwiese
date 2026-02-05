@@ -160,24 +160,26 @@ export function ScenarioApp({ defaultProvider }: Props) {
   const stepTitles = [copy.stepIntro, copy.stepCalibrate, copy.stepResults];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-slate-100">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-12 px-6 py-12">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold">{copy.introTitle}</h1>
-            <div className="text-sm text-muted-foreground">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {copy.introTitle}
+            </h1>
+            <div className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
               {stepTitles[step]}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {stepTitles.map((title, index) => (
               <div key={title} className="flex items-center gap-3">
                 <div
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full border text-sm font-semibold",
+                    "flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold",
                     index <= step
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-white text-muted-foreground"
+                      : "bg-transparent text-muted-foreground"
                   )}
                 >
                   {index + 1}
@@ -191,7 +193,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                   {title}
                 </span>
                 {index < stepTitles.length - 1 ? (
-                  <div className="h-px w-10 bg-muted" />
+                  <div className="h-px w-10 bg-border" />
                 ) : null}
               </div>
             ))}
@@ -201,7 +203,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
         {step === 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle>{copy.introTitle}</CardTitle>
+              <CardTitle className="text-2xl">{copy.introTitle}</CardTitle>
               <CardDescription>{copy.introBody}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
@@ -217,7 +219,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>{copy.calibrateTitle}</CardTitle>
+                <CardTitle className="text-2xl">{copy.calibrateTitle}</CardTitle>
                 <CardDescription>
                   {config.language === "en"
                     ? "Tune the sliders and choose your narrative provider."
@@ -263,7 +265,9 @@ export function ScenarioApp({ defaultProvider }: Props) {
               {axes.map((axis) => (
                 <Card key={axis.id}>
                   <CardHeader>
-                    <CardTitle>{axis.title[config.language]}</CardTitle>
+                    <CardTitle className="text-xl">
+                      {axis.title[config.language]}
+                    </CardTitle>
                     <CardDescription>
                       {axis.description[config.language]}
                     </CardDescription>
@@ -273,7 +277,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                       <span className="text-sm font-medium">
                         {axis.label[config.language]}
                       </span>
-                      <span className="rounded-md bg-muted px-2 py-1 text-sm font-semibold">
+                      <span className="rounded-md border border-border px-2 py-1 text-sm font-semibold">
                         {config[axis.id].toFixed(axis.step < 1 ? 1 : 0)}
                       </span>
                     </div>
@@ -317,14 +321,14 @@ export function ScenarioApp({ defaultProvider }: Props) {
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>{copy.resultsTitle}</CardTitle>
+                <CardTitle className="text-2xl">{copy.resultsTitle}</CardTitle>
                 <CardDescription>{copy.sliderSummary}</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-3">
                 {axes.map((axis) => (
                   <div
                     key={axis.id}
-                    className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
                   >
                     <span>{axisSummaryLabels[axis.id][config.language]}</span>
                     <span className="font-semibold">
@@ -337,7 +341,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
 
             <Card>
               <CardHeader>
-                <CardTitle>{copy.resultsTitle}</CardTitle>
+                <CardTitle className="text-xl">{copy.resultsTitle}</CardTitle>
                 <CardDescription>
                   {config.language === "en"
                     ? "Narrative output based on your calibration."
@@ -363,7 +367,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Audio</CardTitle>
+                <CardTitle className="text-xl">Audio</CardTitle>
                 <CardDescription>
                   {config.language === "en"
                     ? "Generate and replay narration."
@@ -381,7 +385,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                     value={voiceId}
                     onChange={(event) => setVoiceId(event.target.value)}
                     placeholder="elevenlabs voice id"
-                    className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="h-10 rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
                 {audioState === "loading" ? (

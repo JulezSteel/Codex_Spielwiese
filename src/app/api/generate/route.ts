@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ScenarioConfig } from "@/lib/types";
 import { axes } from "@/lib/content";
 
@@ -86,13 +85,37 @@ export async function POST(request: NextRequest) {
     }
 
     if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent([
-        { text: system },
-        { text: user }
-      ]);
-      const text = result.response.text().trim();
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${system}\n\n${user}` }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7
+            }
+          })
+        }
+      );
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Gemini request failed.");
+      }
+      const data = (await response.json()) as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (!text) throw new Error("Empty response from Gemini.");
       return NextResponse.json({ text });
     }
