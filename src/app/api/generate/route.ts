@@ -118,27 +118,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ text });
     }
 
-    if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
+if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
 
   const response = await fetch(url, {
-   if (!response.ok) {
-  const errText = await response.text();
-
-  console.error("Gemini error:", response.status, errText);
-
-  return NextResponse.json(
-    {
-      text: "Gemini request failed (see geminiError).",
-      warning: `Gemini failed: ${response.status}`,
-      geminiError: errText.slice(0, 2000),
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
     },
-    { status: 500 }
-  );
-}
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: `${system}\n\n${user}` }],
+        },
+      ],
+      generationConfig: { temperature: 0.7 },
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Gemini error:", response.status, errText);
+
+    return NextResponse.json(
+      {
+        text: "Gemini request failed (see geminiError).",
+        warning: `Gemini failed: ${response.status}`,
+        geminiError: errText.slice(0, 2000),
+      },
+      { status: 500 }
+    );
+  }
+
+  const data = await response.json();
+
+  const text =
+    data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join("")?.trim() ||
+    "";
+
+  if (!text) {
+    return NextResponse.json(
+      { text: "Gemini returned empty text.", warning: "Gemini response empty." },
+      { status: 500 }
+    );
+  }
+
   return NextResponse.json({ text });
 }
+
       const data = await response.json();
       const text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
