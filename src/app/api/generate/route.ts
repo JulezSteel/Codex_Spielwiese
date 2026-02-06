@@ -139,8 +139,13 @@ export async function POST(request: NextRequest) {
       );
 
       if (!response.ok) {
-        throw new Error("Gemini request failed.");
-      }
+  const errText = await response.text();
+  return NextResponse.json({
+    text: "Gemini request failed (see geminiError).",
+    warning: `Gemini failed: ${response.status}`,
+    geminiError: errText.slice(0, 2000),
+  });
+}
 
       const data = await response.json();
       const text =
