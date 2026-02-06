@@ -94,6 +94,7 @@ function mockNarrative(config: ScenarioConfig) {
 -------------------------------------------------- */
 
 export async function POST(request: NextRequest) {
+  console.log("🔥 NEW ROUTE VERSION ACTIVE");
   const payload = (await request.json()) as ScenarioConfig;
   const config = validateConfig(payload);
   const { system, user } = buildPrompt(config);
