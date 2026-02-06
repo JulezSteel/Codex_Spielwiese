@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ScenarioApp } from "@/components/app";
 
 function getDefaultProvider() {
@@ -6,6 +7,14 @@ function getDefaultProvider() {
   return "mock";
 }
 
-export default function HomePage() {
+function PageInner() {
   return <ScenarioApp defaultProvider={getDefaultProvider()} />;
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <PageInner />
+    </Suspense>
+  );
 }
