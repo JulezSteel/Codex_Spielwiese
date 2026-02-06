@@ -351,7 +351,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                   >
                     <span>{axisSummaryLabels[axis.id][config.language]}</span>
                     <span className="font-semibold">
-                      {config[axis.id].toFixed(axis.step < 1 ? 1 : 0)}
+                      {Number(config[axis.id]).toFixed(axis.step < 1 ? 1 : 0)}
                     </span>
                   </div>
                 ))}
