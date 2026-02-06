@@ -297,7 +297,7 @@ export function ScenarioApp({ defaultProvider }: Props) {
                         {axis.label[config.language]}
                       </span>
                       <span className="rounded-md border border-border px-2 py-1 text-sm font-semibold">
-                        {config[axis.id].toFixed(axis.step < 1 ? 1 : 0)}
+                        {Number(config[axis.id]).toFixed(axis.step < 1 ? 1 : 0)}
                       </span>
                     </div>
                     <Slider
