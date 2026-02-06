@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ScenarioApp } from "@/components/app";
 
 function getDefaultProvider() {
@@ -7,5 +8,9 @@ function getDefaultProvider() {
 }
 
 export default function HomePage() {
-  return <ScenarioApp defaultProvider={getDefaultProvider()} />;
+  return (
+    <Suspense fallback={<div style={{ padding: 24 }}>Loading…</div>}>
+      <ScenarioApp defaultProvider={getDefaultProvider()} />
+    </Suspense>
+  );
 }

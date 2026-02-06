@@ -3,7 +3,16 @@ import { defaultScenario } from "@/lib/content";
 
 const STORAGE_KEY = "future-scenario-config";
 
-const numberKeys: Array<keyof ScenarioConfig> = [
+type NumericAxisKey =
+  | "climateC"
+  | "workforcePressure"
+  | "financialRisk"
+  | "socialCohesion"
+  | "geopolitics"
+  | "governanceInfo"
+  | "techDiffusion";
+
+const numberKeys: NumericAxisKey[] = [
   "climateC",
   "workforcePressure",
   "financialRisk",
@@ -44,20 +53,28 @@ export function applyQueryToConfig(
   searchParams: URLSearchParams,
   current: ScenarioConfig
 ): ScenarioConfig {
-  const next = { ...current };
+  // "next" so typisieren, dass TS weiß: diese Keys sind Numbers
+  const next = { ...current } as ScenarioConfig & Record<NumericAxisKey, number>;
+
   numberKeys.forEach((key) => {
     const value = searchParams.get(key);
-    if (value !== null && !Number.isNaN(Number(value))) {
-      next[key] = Number(value) as ScenarioConfig[typeof key];
+    if (value !== null) {
+      const num = Number(value);
+      if (!Number.isNaN(num)) {
+        next[key] = num;
+      }
     }
   });
+
   const language = searchParams.get("language");
   if (language === "en" || language === "de") {
     next.language = language;
   }
+
   const provider = searchParams.get("provider");
   if (provider === "openai" || provider === "gemini" || provider === "mock") {
     next.provider = provider;
   }
+
   return next;
 }
