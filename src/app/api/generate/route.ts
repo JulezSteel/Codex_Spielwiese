@@ -4,7 +4,7 @@ import { ScenarioConfig } from "@/lib/types";
 import { axes } from "@/lib/content";
 
 /* -------------------------------------------------
-   Helpers
+   Helpers & Validation
 -------------------------------------------------- */
 
 const clamp = (value: number, min: number, max: number) =>
@@ -18,10 +18,6 @@ type NumericAxisKey =
   | "geopolitics"
   | "governanceInfo"
   | "techDiffusion";
-
-/* -------------------------------------------------
-   Validation
--------------------------------------------------- */
 
 function validateConfig(input: ScenarioConfig): ScenarioConfig {
   const config: ScenarioConfig = { ...input };
@@ -56,20 +52,20 @@ function buildPrompt(config: ScenarioConfig) {
 
   const system =
     language === "de"
-      ? "Du bist eine fundierte Zukunftsanalystin. Schreibe eine plausible, intern konsistente 2050-Erzählung. Verwende probabilistische Sprache, keine Gewissheiten. Ton: klar, bodenständig, leicht optimistisch aber ehrlich. Länge 180–280 Wörter. Beziehe jede Achse explizit ein: Klima, Demografie/Arbeitskräfte, Finanzstabilität, sozialer Zusammenhalt, Geopolitik, Regierungsfähigkeit/Informationsordnung, Technologie-Diffusion. Ende mit genau 5 Bullet Points unter der Überschrift 'Was das für dich bedeutet'."
-      : "You are a grounded future analyst. Write a plausible, internally consistent 2050 narrative. Use probabilistic language, no absolutes. Tone: clear, grounded, slightly optimistic but honest. Length 180–280 words. Explicitly reflect every axis: climate, demography/workforce, financial stability, social cohesion, geopolitics, governance/info order, technology diffusion. End with exactly 5 bullet points under the heading 'What this means for you'.";
+      ? "Du bist eine fundierte Zukunftsanalystin. Schreibe eine plausible Erzählung für das Jahr 2050. Länge 180–280 Wörter. Ende mit 5 Bullet Points unter 'Was das für dich bedeutet'."
+      : "You are a grounded future analyst. Write a plausible 2050 narrative. Length 180–280 words. End with exactly 5 bullet points under 'What this means for you'.";
 
   const axisLines = axes
     .map((axis) => {
       const value = Number(config[axis.id]).toFixed(axis.step < 1 ? 1 : 0);
-      return `${axis.title[language]}: ${axis.label[language]} = ${value} (${axis.leftLabel[language]} ↔ ${axis.rightLabel[language]})`;
+      return `${axis.title[language]}: ${value}`;
     })
     .join("\n");
 
   const user =
     language === "de"
-      ? `Hier sind die Kalibrierungen:\n${axisLines}\nSchreibe die Erzählung basierend auf diesen Werten.`
-      : `Here are the calibrations:\n${axisLines}\nWrite the narrative based on these values.`;
+      ? `Hier sind die Kalibrierungen:\n${axisLines}\nSchreibe die Erzählung.`
+      : `Here are the calibrations:\n${axisLines}\nWrite the narrative.`;
 
   return { system, user };
 }
@@ -80,13 +76,10 @@ function buildPrompt(config: ScenarioConfig) {
 
 function mockNarrative(config: ScenarioConfig) {
   const language = config.language;
-  const climate = config.climateC.toFixed(1);
-
   if (language === "de") {
-    return `Das Jahr 2050 fühlt sich nach einem vorsichtigen Balanceakt an. Die Erwärmung liegt bei etwa ${climate}°C. Die Welt ist nicht stabil, aber handlungsfähig. Institutionen stehen unter Druck, doch technologische und gesellschaftliche Anpassung eröffnen weiterhin Spielräume.\n\nWas das für dich bedeutet\n- Investiere in anpassungsfähige Fähigkeiten.\n- Plane langfristiger.\n- Baue Resilienz auf.\n- Pflege soziale Netze.\n- Bleib politisch aufmerksam.`;
+    return `Das Jahr 2050 ist ein Balanceakt. Die Welt ist im Wandel.\n\nWas das für dich bedeutet\n- Sei anpassungsfähig.\n- Plane langfristig.\n- Baue Resilienz auf.\n- Pflege Netze.\n- Bleib aufmerksam.`;
   }
-
-  return `2050 feels like a careful balancing act. Warming sits near ${climate}°C. The world is strained but still capable of adaptation. Institutions are under pressure, yet technology and social learning keep options open.\n\nWhat this means for you\n- Invest in adaptable skills.\n- Plan long-term.\n- Build resilience.\n- Strengthen social ties.\n- Stay civically engaged.`;
+  return `2050 is a balancing act. The world is changing.\n\nWhat this means for you\n- Stay adaptable.\n- Plan long-term.\n- Build resilience.\n- Socialize.\n- Stay engaged.`;
 }
 
 /* -------------------------------------------------
@@ -94,93 +87,66 @@ function mockNarrative(config: ScenarioConfig) {
 -------------------------------------------------- */
 
 export async function POST(request: NextRequest) {
-  console.log("🔥 NEW ROUTE VERSION ACTIVE");
   const payload = (await request.json()) as ScenarioConfig;
   const config = validateConfig(payload);
   const { system, user } = buildPrompt(config);
 
   try {
+    // 1. OpenAI Handler
     if (config.provider === "openai" && process.env.OPENAI_API_KEY) {
       const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-
       const completion = await client.chat.completions.create({
-        model,
+        model: process.env.OPENAI_MODEL || "gpt-4o-mini",
         messages: [
           { role: "system", content: system },
           { role: "user", content: user }
         ],
         temperature: 0.7
       });
+      return NextResponse.json({ text: completion.choices[0]?.message?.content?.trim() });
+    }
 
-      const text = completion.choices[0]?.message?.content?.trim();
-      if (!text) throw new Error("Empty response from OpenAI.");
+    // 2. Gemini Handler (Fixed Logic)
+    if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
+      const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{ text: `System Instructions: ${system}\n\nUser Request: ${user}` }],
+          }],
+          generationConfig: { temperature: 0.7 },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Gemini API Error:", response.status, errorData);
+        return NextResponse.json({ text: "Error: Gemini API key invalid or rate limited." }, { status: 500 });
+      }
+
+      const data = await response.json();
+      // Beginners: This is the specific part that finds the text in Gemini's complicated data structure
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (!text) {
+        return NextResponse.json({ text: "Gemini blocked the response. Try different slider settings." }, { status: 500 });
+      }
+
       return NextResponse.json({ text });
     }
 
-if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": process.env.GEMINI_API_KEY,
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `${system}\n\n${user}` }],
-        },
-      ],
-      generationConfig: { temperature: 0.7 },
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("Gemini error:", response.status, errText);
-
-    return NextResponse.json(
-      {
-        text: "Gemini request failed (see geminiError).",
-        warning: `Gemini failed: ${response.status}`,
-        geminiError: errText.slice(0, 2000),
-      },
-      { status: 500 }
-    );
-  }
-
-  const data = await response.json();
-
-  const text =
-    data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join("")?.trim() ||
-    "";
-
-  if (!text) {
-    return NextResponse.json(
-      { text: "Gemini returned empty text.", warning: "Gemini response empty." },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ text });
-}
-
-
+    // 3. Fallback to Mock
     return NextResponse.json({ text: mockNarrative(config) });
+
   } catch (error) {
-    return NextResponse.json(
-      {
-        text: mockNarrative(config),
-        warning:
-          error instanceof Error
-            ? error.message
-            : "Generation failed, using mock."
-      },
-      { status: 200 }
-    );
+    console.error("General API Error:", error);
+    return NextResponse.json({ text: mockNarrative(config), warning: "Using fallback narrative." });
   }
 }
