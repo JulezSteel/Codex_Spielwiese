@@ -169,13 +169,6 @@ if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
   return NextResponse.json({ text });
 }
 
-      const data = await response.json();
-      const text =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
-      if (!text) throw new Error("Empty response from Gemini.");
-      return NextResponse.json({ text });
-    }
 
     return NextResponse.json({ text: mockNarrative(config) });
   } catch (error) {
