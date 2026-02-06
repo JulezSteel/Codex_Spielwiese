@@ -118,35 +118,56 @@ export async function POST(request: NextRequest) {
     }
 
     if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
+  const url =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY,
+    },
+    body: JSON.stringify({
+      contents: [
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": process.env.GEMINI_API_KEY
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: `${system}\n\n${user}` }]
-              }
-            ],
-            generationConfig: { temperature: 0.7 }
-          })
-        }
-      );
-
-      if (!response.ok) {
-  const errText = await response.text();
-  return NextResponse.json({
-    text: "Gemini request failed (see geminiError).",
-    warning: `Gemini failed: ${response.status}`,
-    geminiError: errText.slice(0, 2000),
+          role: "user",
+          parts: [{ text: `${system}\n\n${user}` }],
+        },
+      ],
+      generationConfig: { temperature: 0.8 },
+    }),
   });
-}
 
+  const raw = await response.text();
+
+  // 1) Das erscheint in Vercel -> Logs
+  console.log("GEMINI_STATUS", response.status);
+  console.log("GEMINI_BODY", raw.slice(0, 2000));
+
+  // 2) Das siehst du im Browser -> Network -> Response
+  if (!response.ok) {
+    return NextResponse.json({
+      text: fallbackText(config),
+      warning: `Gemini failed: ${response.status}`,
+      geminiError: raw.slice(0, 2000),
+    });
+  }
+
+  // Erfolg: Text aus Gemini-Antwort ziehen
+  const data = JSON.parse(raw);
+  const text =
+    data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join("")?.trim() || "";
+
+  if (!text) {
+    return NextResponse.json({
+      text: fallbackText(config),
+      warning: "Gemini returned no text",
+      geminiError: raw.slice(0, 2000),
+    });
+  }
+
+  return NextResponse.json({ text });
+}
       const data = await response.json();
       const text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
