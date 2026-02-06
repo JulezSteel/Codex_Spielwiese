@@ -123,8 +123,11 @@ export async function POST(request: NextRequest) {
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
 
   const response = await fetch(url, {
-    if (!response.ok) {
+   if (!response.ok) {
   const errText = await response.text();
+
+  console.error("Gemini error:", response.status, errText);
+
   return NextResponse.json(
     {
       text: "Gemini request failed (see geminiError).",
