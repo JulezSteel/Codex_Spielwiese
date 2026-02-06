@@ -1,7 +1,6 @@
-import { Suspense } from "react";
-import { ScenarioApp } from "@/components/app";
-
 export const dynamic = "force-dynamic";
+
+import { ScenarioApp } from "@/components/app";
 
 function getDefaultProvider() {
   if (process.env.OPENAI_API_KEY) return "openai";
@@ -10,9 +9,5 @@ function getDefaultProvider() {
 }
 
 export default function HomePage() {
-  return (
-    <Suspense fallback={null}>
-      <ScenarioApp defaultProvider={getDefaultProvider()} />
-    </Suspense>
-  );
+  return <ScenarioApp defaultProvider={getDefaultProvider()} />;
 }
