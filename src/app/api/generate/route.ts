@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
         {
           method: "POST",
           headers: {
