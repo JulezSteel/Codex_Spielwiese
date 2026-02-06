@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ text: completion.choices[0]?.message?.content?.trim() });
     }
 
-    // 2. Gemini Handler (Fixed Logic)
+    // 2. Gemini Handler
     if (config.provider === "gemini" && process.env.GEMINI_API_KEY) {
       const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
       
@@ -128,15 +128,14 @@ export async function POST(request: NextRequest) {
       if (!response.ok) {
         const errorData = await response.text();
         console.error("Gemini API Error:", response.status, errorData);
-        return NextResponse.json({ text: "Error: Gemini API key invalid or rate limited." }, { status: 500 });
+        return NextResponse.json({ text: "Error: Gemini API request failed." }, { status: 500 });
       }
 
       const data = await response.json();
-      // Beginners: This is the specific part that finds the text in Gemini's complicated data structure
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
       if (!text) {
-        return NextResponse.json({ text: "Gemini blocked the response. Try different slider settings." }, { status: 500 });
+        return NextResponse.json({ text: "Gemini response was empty or blocked." }, { status: 500 });
       }
 
       return NextResponse.json({ text });
@@ -147,6 +146,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("General API Error:", error);
-    return NextResponse.json({ text: mockNarrative(config), warning: "Using fallback narrative." });
+    return NextResponse.json({ 
+      text: mockNarrative(config), 
+      warning: error instanceof Error ? error.message : "An unknown error occurred." 
+    });
   }
 }
